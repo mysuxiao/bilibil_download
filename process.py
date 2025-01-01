@@ -5,9 +5,11 @@ from imageio_ffmpeg import get_ffmpeg_exe
 def merge_video_audio(video_path, audio_path, output_path):
     """合并视频和音频"""
     try:
+        ffmpeg_path = get_ffmpeg_exe()  # 自动获取ffmpeg路径
         import subprocess
+
         cmd = [
-            'ffmpeg',
+            ffmpeg_path,
             '-i', video_path,
             '-i', audio_path,
             '-c', 'copy',
@@ -15,7 +17,7 @@ def merge_video_audio(video_path, audio_path, output_path):
             output_path
         ]
 
-        # 使用 CREATE_NO_WINDOW 标志来隐藏控制台窗口（仅Windows）
+        # 创建 startupinfo 对象（Windows下隐藏控制台窗口）
         startupinfo = None
         if os.name == 'nt':
             startupinfo = subprocess.STARTUPINFO()
@@ -27,23 +29,19 @@ def merge_video_audio(video_path, audio_path, output_path):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
-            # 不使用 universal_newlines=True
-            # 使用二进制模式读取输出
-            text=False
+            text=False  # 使用二进制模式
         )
 
+        # 获取输出并正确处理编码
         stdout, stderr = process.communicate()
 
-        # 正确处理输出编码
+        # 尝试不同的编码方式解码输出
         try:
-            stdout = stdout.decode('utf-8') if stdout else ''
             stderr = stderr.decode('utf-8') if stderr else ''
         except UnicodeDecodeError:
             try:
-                stdout = stdout.decode('gbk') if stdout else ''
                 stderr = stderr.decode('gbk') if stderr else ''
             except UnicodeDecodeError:
-                stdout = str(stdout) if stdout else ''
                 stderr = str(stderr) if stderr else ''
 
         if process.returncode == 0:
